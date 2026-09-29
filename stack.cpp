@@ -11,10 +11,10 @@
 
 
 #define STACK_POISON NAN
+#define STACK_CANARY 0x8BADF00D
 #define PRINT_ELEM_FORMAT "%f"
 
 const char* LOG_FILE_NAME = "stack.log";
-
 
 ErrorCode stackInit(
     stack_t* stk,
@@ -31,6 +31,9 @@ ErrorCode stackInit(
     if (stk->data == NULL) {
         return ERR_OUT_OF_MEMORY;
     }
+
+    stk->leftCanary  = STACK_CANARY;
+    stk->rightCanary = STACK_CANARY;
 
     stk->size = 0;
     stk->capacity = capacity;
@@ -162,6 +165,22 @@ ErrorCode stackDestroy(stack_t* stk)
 
 ErrorCode stackOK(const stack_t* stk, const char* function, const int line){
 
+    if ((stk->leftCanary != STACK_CANARY) || (stk->rightCanary != STACK_CANARY)) {
+
+        struct debugLog_t debugLogInfo = {};
+        char timeString[32] = {};
+
+        debugLogInfo.time = getOperationTime(timeString, 32);
+        debugLogInfo.file = __FILE__;
+        debugLogInfo.function = __func__;
+        debugLogInfo.line = __LINE__;
+        debugLogInfo.error = ERR_INVALID_DATA;
+
+        printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
+
+        return ERR_INVALID_DATA;
+    }
+
     struct debugLog_t debugLogInfo = {};
 
     char timeString[32] = {};
@@ -258,6 +277,10 @@ ErrorCode stackDump(const stack_t* stk)
             stk->debugInfo.line);
 
     printf("{\n");
+
+    printf("leftCanary = %I64X\n", stk->leftCanary);
+    printf("rightCanary = %I64X\n", stk->rightCanary);
+
     printf("capacity = %u\n", stk->capacity);
     printf("size = %u    \n", stk->size);
     printf("data[%p]{    \n", stk->data);

@@ -14,6 +14,7 @@
 // Types
 
 typedef double stackElem_t;
+typedef unsigned long long canary_t;
 
 struct debugLog_t {
     char* time;
@@ -31,6 +32,8 @@ struct debugStack_t {
 };
 
 struct stack_t {
+    canary_t leftCanary;
+
     stackElem_t* data;
     size_t size;
     size_t capacity;
@@ -38,6 +41,8 @@ struct stack_t {
     ON_DBG(
         debugStack_t debugInfo;
     )
+
+    canary_t rightCanary;
 };
 
 // Prototypes
