@@ -1,6 +1,7 @@
 # STACK
 
 ## Author: Ekaterina Kraeva
+## Mentor: Pavel Taracanov
 
 ## Description
 The project involves working with stacks that have multiple layers of protection. All stack‑related functions have been created and are working properly.
@@ -54,5 +55,68 @@ for (size_t i = 0; i < capacity; i++) {
     stk->data[i] = STACK_POISON;
 }
 ```
-### stackPush
+### Stack verification
 
+```bash
+stackOK();
+```
+
+The verifier checks:
+- stack pointer validity
+- structure canaries
+- data canaries
+- allocated memory size using _msize
+- size <= capacity
+
+All errors are displayed in detail in the log file:
+
+```bash
+[30.09.2026 21:54:35] Function 'stackPush' was completed with Error 8 in file 'stack.cpp' in line 64
+```
+
+### stackDump
+The function outputs a complete printout of all stack data to the console.
+```bash
+stack_t &stk1[0061FEA0] created by main() at version1cpp:22
+{
+    leftStructCanary = 8BADF00D
+    leftDataCanary   = ABADBABE
+
+    capacity = 3
+    size = 2
+
+    data[01234567]{
+        *[0] = 7.200000
+        *[1] = 3.500000
+        *[2] = NaN(POISON)
+    }
+
+    rightDataCanary   = B16B00B5
+    rightStructCanary = 50FFC001
+}
+```
+
+### Tests
+Several test variations have been implemented.
+```bash
+ErrorCode correctTest();
+ErrorCode sizeMoreThanCapacityTest();
+ErrorCode badDataCanaryTest();
+```
+### Canary Protection
+
+The stack structure is protected by canaries. The array of values itself also contains canaries.
+
+```bash
+typedef unsigned long long canary_t;
+```
+
+There are functions for alignment:
+```bash
+size_t getDataOffset();
+size_t alignment(size_t value, size_t alignment);
+size_t getAllocationSize(size_t capacity);
+size_t getRightCanaryOffset(size_t capacity);
+canary_t* getLeftDataCanary(const struct stack_t* stk);
+canary_t* getRightDataCanary(const struct stack_t* stk);
+```
