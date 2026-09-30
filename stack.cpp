@@ -9,34 +9,38 @@
 #include "../universal-features/error.h"
 #include "../universal-features/colors.h"
 
-
 #define STACK_POISON NAN
-#define STACK_CANARY 0x8BADF00D
 #define PRINT_ELEM_FORMAT "%f"
 
 const char* LOG_FILE_NAME = "stack.log";
+const int RESIZE_UP_INDICATOR = 1;
+const int RESIZE_DOWN_INDICATOR = -1;
+const canary_t LEFT_STRUCT_CANARY = 0x8BADF00D;
+const canary_t RIGHT_STRUCT_CANARY = 0x50FFC001;
+const canary_t LEFT_DATA_CANARY = 0xABADBABE;
+const canary_t RIGHT_DATA_CANARY = 0xB16B00B5;
 
-ErrorCode stackInit(
-    stack_t* stk,
-    size_t capacity
-    ON_DBG(, debugStack_t debugInfo)
-)
+ErrorCode stackInit(stack_t* stk, size_t capacity ON_DBG(, debugStack_t debugInfo))
 {
 
-    stk->data = (stackElem_t*) calloc(
-        capacity,
-        sizeof(stackElem_t)
-    );
+    size_t allocationSize = getAllocationSize(capacity);
 
-    if (stk->data == NULL) {
+    char* newMemory = (char*) calloc(1, allocationSize);
+
+    if (newMemory == NULL) {
         return ERR_OUT_OF_MEMORY;
     }
 
-    stk->leftCanary  = STACK_CANARY;
-    stk->rightCanary = STACK_CANARY;
+    stk->data = (stackElem_t*)(newMemory + getDataOffset());
+
+    stk->leftStructCanary  = LEFT_STRUCT_CANARY;
+    stk->rightStructCanary = RIGHT_STRUCT_CANARY;
 
     stk->size = 0;
     stk->capacity = capacity;
+
+    *getLeftDataCanary(stk)  = LEFT_DATA_CANARY;
+    *getRightDataCanary(stk) = RIGHT_DATA_CANARY;
 
     for (size_t i = 0; i < capacity; i++) {
         stk->data[i] = STACK_POISON;
@@ -45,6 +49,7 @@ ErrorCode stackInit(
     ON_DBG(
         stk->debugInfo = debugInfo;
     )
+
     ASSERT_OK(stk, __func__);
 
     STACK_DUMP(stk);
@@ -59,7 +64,7 @@ ErrorCode stackPush(stack_t* stk, stackElem_t value)
     ASSERT_OK(stk, __func__);
 
     if ((stk->size) >= (stk->capacity)) {
-        resizeStack(stk, 1);
+        resizeStack(stk, RESIZE_UP_INDICATOR);
     }
 
     stk->data[stk->size] = value;
@@ -77,21 +82,6 @@ ErrorCode stackPop(stack_t* stk, stackElem_t* value)
 
     ASSERT_OK(stk, __func__);
 
-    if (stk->size == 0) {
-
-        struct debugLog_t debugLogInfo = {};
-
-        char timeString[32] = {};
-
-        debugLogInfo.time = getOperationTime(timeString, 32);
-        debugLogInfo.file = __FILE__;
-        debugLogInfo.function = __func__;
-        debugLogInfo.line = __LINE__;
-        debugLogInfo.error = ERR_OUT_OF_BOUNDS;
-
-        printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
-        return ERR_OUT_OF_BOUNDS;
-    }
 
     stk->size--;
 
@@ -100,8 +90,10 @@ ErrorCode stackPop(stack_t* stk, stackElem_t* value)
     stk->data[stk->size] = STACK_POISON;
 
     if((stk->size)+1 <= (stk->capacity / 2)){
-        resizeStack(stk, -1);
+        resizeStack(stk, RESIZE_DOWN_INDICATOR);
     }
+
+    printf("Last value" PRINT_ELEM_FORMAT "was deleted from stack\n\n", *value);
 
     ASSERT_OK(stk, __func__);
 
@@ -117,7 +109,7 @@ ErrorCode resizeStack(stack_t* stk, int direction){
     size_t oldCapacity = stk->capacity;
     size_t newCapacity = 0;
 
-    if(direction > 0){
+    if (direction > 0){
         newCapacity = stk->capacity * 2;
     }
     else{
@@ -126,85 +118,126 @@ ErrorCode resizeStack(stack_t* stk, int direction){
 
     if(newCapacity == 0) return ERR_OUT_OF_BOUNDS;
 
-    stackElem_t* newData = (stackElem_t*) realloc(stk->data, newCapacity * sizeof(stackElem_t));
+    size_t newAllocationSize = getAllocationSize(newCapacity);
+
+    char* oldData = (char*) stk->data - getDataOffset();
+    char* newData = (char*) realloc(oldData, newAllocationSize);
 
     if (newData == NULL) {
         return ERR_OUT_OF_MEMORY;
     }
 
-    stk->data = newData;
+    stk->data = (stackElem_t*)(newData + getDataOffset());
     stk->capacity = newCapacity;
 
     if (newCapacity > oldCapacity) {
+
         for (size_t i = oldCapacity; i < newCapacity; i++) {
             stk->data[i] = STACK_POISON;
         }
+
     }
+
+    *getLeftDataCanary(stk)  = LEFT_DATA_CANARY;
+    *getRightDataCanary(stk) = RIGHT_DATA_CANARY;
 
     ASSERT_OK(stk, __func__);
 
-    printf(COLOR_RED "%s" COLOR_RESET, "Stack resize\n");
+    printf(COLOR_RED "%s" COLOR_RESET, "\nStack resize\n");
 
     return ERR_OK;
 }
 
+ErrorCode cleanData(struct stack_t* stk){
+
+    ASSERT_OK(stk, __func__);
+
+    for(size_t i = 0; i < stk->capacity; i++){
+        (stk->data)[i] = STACK_POISON;
+    }
+
+    ASSERT_OK(stk, __func__);
+
+    return ERR_OK;
+
+}
 
 ErrorCode stackDestroy(stack_t* stk)
 {
+
     ASSERT_OK(stk, __func__);
 
-    free(stk->data);
+    cleanData(stk);
+
+    char* dataMemory = (char*)stk->data - getDataOffset();
+
+    free(dataMemory);
 
     stk->data = NULL;
     stk->size = 0;
     stk->capacity = 0;
 
-    printf("Stack was destroyed");
+    printf("COLOR_RED %s COLOR_RESET", "Stack was destroyed\n");
+
     return ERR_OK;
+
 };
 
 ErrorCode stackOK(const stack_t* stk, const char* function, const int line){
 
-    if ((stk->leftCanary != STACK_CANARY) || (stk->rightCanary != STACK_CANARY)) {
-
-        struct debugLog_t debugLogInfo = {};
-        char timeString[32] = {};
-
-        debugLogInfo.time = getOperationTime(timeString, 32);
-        debugLogInfo.file = __FILE__;
-        debugLogInfo.function = __func__;
-        debugLogInfo.line = __LINE__;
-        debugLogInfo.error = ERR_INVALID_DATA;
-
-        printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
-
-        return ERR_INVALID_DATA;
-    }
-
-    struct debugLog_t debugLogInfo = {};
+    debugLog_t debugLogInfo = {};
 
     char timeString[32] = {};
     debugLogInfo.time = getOperationTime(timeString, 32);
-
     debugLogInfo.file = __FILE__;
     debugLogInfo.function = function;
     debugLogInfo.line = line;
 
     if (stk == NULL) {
+
         debugLogInfo.error = ERR_INVALID_ARGUMENT;
         printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
+
         return ERR_INVALID_ARGUMENT;
     }
 
-    if(_msize(stk->data) != (stk->capacity) * sizeof(stackElem_t)){
+    if(function == "stackPop" && stk->size == 0){
+
+        debugLogInfo.error = ERR_OUT_OF_BOUNDS;
+        printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
+
+        return ERR_OUT_OF_BOUNDS;
+    }
+
+    if ((stk->leftStructCanary != LEFT_STRUCT_CANARY) || (stk->rightStructCanary != RIGHT_STRUCT_CANARY)) {
+
         debugLogInfo.error = ERR_INVALID_DATA;
         printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
+
+        return ERR_INVALID_DATA;
+    }
+
+    if ((*getLeftDataCanary(stk) != LEFT_DATA_CANARY) || (*getRightDataCanary(stk) != RIGHT_DATA_CANARY)) {
+
+        debugLogInfo.error = ERR_INVALID_DATA;
+        printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
+
+        return ERR_INVALID_DATA;
+    }
+
+    if(_msize((char*)stk->data - getDataOffset()) != getAllocationSize(stk->capacity)){
+
+        debugLogInfo.error = ERR_INVALID_DATA;
+        printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
+
         return ERR_INVALID_DATA;
     }
 
     if(stk->size > stk->capacity){
+
         debugLogInfo.error = ERR_OVERFLOW;
         printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
+
         return ERR_OVERFLOW;
     }
 
@@ -229,7 +262,6 @@ char* getOperationTime(char* timeBuffer, size_t size){
 }
 
 ErrorCode printIntoLogFile(const char* filename, struct debugLog_t* debugLogInfo) {
-
     FILE* logFile = fopen(filename, "a");
 
     if(logFile == NULL){
@@ -259,6 +291,71 @@ ErrorCode deletingLogFile(const char* fileName){
     return ERR_OK;
 }
 
+ErrorCode updateLogFile(const char* filename){
+
+    FILE* logFile = fopen(filename, "a");
+
+    if(logFile == NULL){
+        printf("File '%s' does not exists", filename);
+        return ERR_FILE_NOT_FOUND;
+    }
+
+    fprintf(logFile, "\n");
+
+    fclose(logFile);
+
+    return ERR_OK;
+}
+
+size_t getDataOffset()
+{
+    return alignment(sizeof(canary_t), alignof(stackElem_t));
+}
+
+size_t alignment(size_t value, size_t alignment)
+{
+    return value + alignment - 1;
+}
+
+size_t getRightCanaryOffset(size_t capacity)
+{
+    size_t stackEnd = capacity * sizeof(stackElem_t) + getDataOffset();
+
+    return alignment(stackEnd, alignof(canary_t));
+}
+
+canary_t* getLeftDataCanary(const stack_t* stk)
+{
+
+    char* leftDataCanary = (char*)stk->data - getDataOffset();
+
+    return (canary_t*)leftDataCanary;
+}
+
+canary_t* getRightDataCanary(const stack_t* stk)
+{
+
+    char* rightDataCanary = (char*)stk->data - getDataOffset();
+
+    return (canary_t*)(rightDataCanary + getRightCanaryOffset(stk->capacity));
+}
+
+size_t getAllocationSize(size_t capacity)
+{
+    return getRightCanaryOffset(capacity) + sizeof(canary_t);
+}
+
+void printStackElem(size_t index, stackElem_t value){
+
+    if(isnan(value)){
+        printf("\t\t*[%u] = " COLOR_MAGENTA "%s(POISON)" COLOR_RESET "\n", index, "NaN");
+    }
+    else{
+        printf("\t\t*[%u] = " PRINT_ELEM_FORMAT "\n", index, value);
+    }
+
+    return;
+}
 
 #ifdef STACK_DEBUG
 
@@ -269,7 +366,7 @@ ErrorCode stackDump(const stack_t* stk)
         return ERR_INVALID_ARGUMENT;
     }
 
-    printf("stack_t '%s'[%p] created by %s() at %s:%u\n",
+    printf("\nstack_t '%s'[%p] created by %s() at %s:%u\n",
             stk->debugInfo.name,
             stk,
             stk->debugInfo.function,
@@ -278,28 +375,29 @@ ErrorCode stackDump(const stack_t* stk)
 
     printf("{\n");
 
-    printf("leftCanary = %I64X\n", stk->leftCanary);
-    printf("rightCanary = %I64X\n", stk->rightCanary);
+    printf("\tleftStructCanary = %I64X\n", stk->leftStructCanary);
+    printf("\tleftDataCanary   = %I64X\n\n", *getLeftDataCanary(stk));
 
-    printf("capacity = %u\n", stk->capacity);
-    printf("size = %u    \n", stk->size);
-    printf("data[%p]{    \n", stk->data);
+    printf("\tcapacity = %u\n", stk->capacity);
+    printf("\tsize = %u    \n", stk->size);
+    printf("\tdata[%p]{    \n", stk->data);
+
     for(size_t i = 0; i < stk->capacity; i++){
-
-        if(i < stk->size){
-            printf("*[%u] = " PRINT_ELEM_FORMAT "\n", i, (stk->data)[i]);
-        }
-        else{
-            printf("*[%u] = " PRINT_ELEM_FORMAT "(POISON)\n", i, (stk->data)[i]);
-        }
-
+        printStackElem(i, (stk->data)[i]);
     }
+
+    printf("\t}\n\n");
+
+    printf("\trightDataCanary   = %I64X\n", *getRightDataCanary(stk));
+    printf("\trightStructCanary = %I64X\n", stk->rightStructCanary);
+
     printf("}\n");
 
     getchar();
 
     return ERR_OK;
 }
+
 
 #endif
 

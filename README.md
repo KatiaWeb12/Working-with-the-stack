@@ -36,3 +36,23 @@ The file contains:
 ### stack.cpp
 The file contains implementation of functions
 
+### version1.cpp
+The file contains a call to the main functions for working with the stack.
+
+## Functions
+
+### stackInit
+Stack initialization. Filling the structure with basic data. Array elements with a stack are created as STACK_POISON.
+```bash
+stk->leftCanary  = STACK_CANARY;
+stk->rightCanary = STACK_CANARY;
+
+stk->size = 0;
+stk->capacity = capacity;
+
+for (size_t i = 0; i < capacity; i++) {
+    stk->data[i] = STACK_POISON;
+}
+```
+### stackPush
+

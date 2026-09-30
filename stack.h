@@ -32,7 +32,7 @@ struct debugStack_t {
 };
 
 struct stack_t {
-    canary_t leftCanary;
+    canary_t leftStructCanary;
 
     stackElem_t* data;
     size_t size;
@@ -42,7 +42,7 @@ struct stack_t {
         debugStack_t debugInfo;
     )
 
-    canary_t rightCanary;
+    canary_t rightStructCanary;
 };
 
 // Prototypes
@@ -60,6 +60,15 @@ ErrorCode stackPop(struct stack_t* stk, stackElem_t* value);
 ErrorCode stackDestroy(struct stack_t* stk);
 ErrorCode deletingLogFile(const char* fileName);
 char* getOperationTime(char* timeBuffer, size_t size);
+ErrorCode updateLogFile(const char* filename);
+size_t getDataOffset();
+size_t alignment(size_t value, size_t alignment);
+size_t getAllocationSize(size_t capacity);
+size_t getRightCanaryOffset(size_t capacity);
+canary_t* getLeftDataCanary(const struct stack_t* stk);
+canary_t* getRightDataCanary(const struct stack_t* stk);
+void printStackElem(size_t index, stackElem_t value);
+ErrorCode cleanData(struct stack_t* stk);
 
 ON_DBG(
     ErrorCode stackDump(const stack_t* stk);
