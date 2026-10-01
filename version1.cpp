@@ -6,12 +6,15 @@
 ErrorCode correctTest();
 ErrorCode sizeMoreThanCapacityTest();
 ErrorCode badDataCanaryTest();
+ErrorCode badTryToPopEmptyStackTest();
 
 int main(){
 
     updateLogFile("stack.log");
 
-    badDataCanaryTest();
+    correctTest();
+
+    endLogIteration("stack.log");
 
 }
 
@@ -161,6 +164,45 @@ ErrorCode badDataCanaryTest(){
     error = stackPush(&stk1, 3.5);
     if(error){
         printf("The function stackPush was completed with an error code: %d\n", error);
+        return error;
+    }
+
+    return ERR_OK;
+}
+
+ErrorCode badTryToPopEmptyStackTest(){
+
+    struct stack_t stk1 = {};
+
+    ErrorCode error = STACK_INIT(&stk1, 3);
+    if(error){
+        printf("The function STACK_INIT was completed with an error code: %d\n", error);
+        return error;
+    }
+
+    error = stackPush(&stk1, 7.2);
+    if(error){
+        printf("The function stackPush was completed with an error code: %d\n", error);
+        return error;
+    }
+
+    stackElem_t lastValue = NAN;
+
+    error = stackPop(&stk1, &lastValue);
+    if(error){
+        printf("The function stackPop was completed with an error code: %d\n", error);
+        return error;
+    }
+
+    error = stackPop(&stk1, &lastValue);
+    if(error){
+        printf("The function stackPop was completed with an error code: %d\n", error);
+        return error;
+    }
+
+    error = stackPop(&stk1, &lastValue);
+    if(error){
+        printf("The function stackPop was completed with an error code: %d\n", error);
         return error;
     }
 

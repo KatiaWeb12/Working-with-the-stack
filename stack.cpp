@@ -50,7 +50,7 @@ ErrorCode stackInit(stack_t* stk, size_t capacity ON_DBG(, debugStack_t debugInf
         stk->debugInfo = debugInfo;
     )
 
-    ASSERT_OK(stk, __func__);
+    ASSERT_OK(stk, stackInit);
 
     STACK_DUMP(stk);
 
@@ -61,7 +61,7 @@ ErrorCode stackInit(stack_t* stk, size_t capacity ON_DBG(, debugStack_t debugInf
 ErrorCode stackPush(stack_t* stk, stackElem_t value)
 {
 
-    ASSERT_OK(stk, __func__);
+    ASSERT_OK(stk, stackPush);
 
     if ((stk->size) >= (stk->capacity)) {
         resizeStack(stk, RESIZE_UP_INDICATOR);
@@ -70,7 +70,7 @@ ErrorCode stackPush(stack_t* stk, stackElem_t value)
     stk->data[stk->size] = value;
     (stk->size)++;
 
-    ASSERT_OK(stk, __func__);
+    ASSERT_OK(stk, stackPush);
 
     STACK_DUMP(stk);
 
@@ -80,7 +80,7 @@ ErrorCode stackPush(stack_t* stk, stackElem_t value)
 ErrorCode stackPop(stack_t* stk, stackElem_t* value)
 {
 
-    ASSERT_OK(stk, __func__);
+    ASSERT_OK(stk, stackPop);
 
 
     stk->size--;
@@ -95,7 +95,7 @@ ErrorCode stackPop(stack_t* stk, stackElem_t* value)
 
     printf("Last value" PRINT_ELEM_FORMAT "was deleted from stack\n\n", *value);
 
-    ASSERT_OK(stk, __func__);
+    ASSERT_OK(stk, stackPop);
 
     STACK_DUMP(stk);
 
@@ -104,16 +104,19 @@ ErrorCode stackPop(stack_t* stk, stackElem_t* value)
 
 ErrorCode resizeStack(stack_t* stk, int direction){
 
-    ASSERT_OK(stk, __func__);
+    ASSERT_OK(stk, resizeStack);
 
     size_t oldCapacity = stk->capacity;
     size_t newCapacity = 0;
 
     if (direction > 0){
-        newCapacity = stk->capacity * 2;
+        newCapacity = oldCapacity * 2;
     }
     else{
-        newCapacity = stk->capacity / 2;
+        if(oldCapacity <= 3){
+            return ERR_OK;
+        }
+        newCapacity = oldCapacity / 2;
     }
 
     if(newCapacity == 0) return ERR_OUT_OF_BOUNDS;
@@ -141,7 +144,7 @@ ErrorCode resizeStack(stack_t* stk, int direction){
     *getLeftDataCanary(stk)  = LEFT_DATA_CANARY;
     *getRightDataCanary(stk) = RIGHT_DATA_CANARY;
 
-    ASSERT_OK(stk, __func__);
+    ASSERT_OK(stk, resizeStack);
 
     printf(COLOR_RED "%s" COLOR_RESET, "\nStack resize\n");
 
@@ -150,13 +153,13 @@ ErrorCode resizeStack(stack_t* stk, int direction){
 
 ErrorCode cleanData(struct stack_t* stk){
 
-    ASSERT_OK(stk, __func__);
+    ASSERT_OK(stk, cleanData);
 
     for(size_t i = 0; i < stk->capacity; i++){
         (stk->data)[i] = STACK_POISON;
     }
 
-    ASSERT_OK(stk, __func__);
+    ASSERT_OK(stk, cleanData);
 
     return ERR_OK;
 
@@ -165,7 +168,7 @@ ErrorCode cleanData(struct stack_t* stk){
 ErrorCode stackDestroy(stack_t* stk)
 {
 
-    ASSERT_OK(stk, __func__);
+    ASSERT_OK(stk, stackDestroy);
 
     cleanData(stk);
 
@@ -183,15 +186,11 @@ ErrorCode stackDestroy(stack_t* stk)
 
 };
 
-ErrorCode stackOK(const stack_t* stk, const char* function, const int line){
+ErrorCode stackOK(const stack_t* stk, const char* function, const void* functionPtr, const int line){
 
     debugLog_t debugLogInfo = {};
 
-    char timeString[32] = {};
-    debugLogInfo.time = getOperationTime(timeString, 32);
-    debugLogInfo.file = __FILE__;
-    debugLogInfo.function = function;
-    debugLogInfo.line = line;
+    LOG_STRUCT_FORMAT(stk, function, line);
 
     if (stk == NULL) {
 
@@ -201,7 +200,7 @@ ErrorCode stackOK(const stack_t* stk, const char* function, const int line){
         return ERR_INVALID_ARGUMENT;
     }
 
-    if(function == "stackPop" && stk->size == 0){
+    if(functionPtr == stackPop && stk->size == 0){
 
         debugLogInfo.error = ERR_OUT_OF_BOUNDS;
         printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
@@ -301,6 +300,24 @@ ErrorCode updateLogFile(const char* filename){
     }
 
     fprintf(logFile, "\n");
+
+    fclose(logFile);
+
+    return ERR_OK;
+}
+
+ErrorCode endLogIteration(const char* filename){
+
+    FILE* logFile = fopen(filename, "a");
+
+    if(logFile == NULL){
+        printf("File '%s' does not exists", filename);
+        return ERR_FILE_NOT_FOUND;
+    }
+
+    char timeString[32] = "";
+    getOperationTime(timeString, 32);
+    fprintf(logFile, "[%s] Program ended", timeString);
 
     fclose(logFile);
 

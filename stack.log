@@ -12,19 +12,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 [30.09.2026 21:33:29] Function 'stackInit' was completed with Error 8 in file 'stack.cpp' in line 53
 
 [30.09.2026 21:34:04] Function 'stackInit' was completed with Error 8 in file 'stack.cpp' in line 53
@@ -37,3 +24,34 @@
 
 
 [30.09.2026 21:54:35] Function 'stackPush' was completed with Error 8 in file 'stack.cpp' in line 64
+
+[01.10.2026 14:41:36] Function 'stackPush' was completed with Error 8 in file 'stack.cpp' in line 64
+
+[01.10.2026 14:45:35] Function 'stackPush' was completed with Error 8 in file 'stack.cpp' in line 64
+
+[01.10.2026 14:48:52] Function 'stackPush' was completed with Error 8 in file 'stack.cpp' in line 64
+
+[01.10.2026 15:13:09] Program ended
+
+[01.10.2026 15:18:28] Program ended
+[01.10.2026 15:21:53] Program ended
+[01.10.2026 15:22:18] Program ended
+[01.10.2026 15:23:02] Program ended
+[01.10.2026 15:23:09] Function 'stackPush' was completed with Error 8 in file 'stack.cpp' in line 64
+
+[01.10.2026 15:25:02] Function 'stackPush' was completed with Error 8 in file 'stack.cpp' in line 64
+[01.10.2026 15:25:02] Program ended
+
+[01.10.2026 15:47:37] Function 'stackPush' was completed with Error 8 in file 'stack.cpp' in line 64 
+[01.10.2026 15:47:37] Program ended
+[01.10.2026 15:54:11] Function 'resizeStack' was completed with Error 10 in file 'stack.cpp' in line 107 
+[01.10.2026 15:54:14] Program ended
+[01.10.2026 15:57:46] Function 'resizeStack' was completed with Error 10 in file 'stack.cpp' in line 107 
+[01.10.2026 15:57:47] Program ended
+[01.10.2026 15:59:59] Function 'resizeStack' was completed with Error 10 in file 'stack.cpp' in line 107 
+[01.10.2026 16:01:45] Program ended
+[01.10.2026 16:02:04] Function 'stackPop' was completed with Error 4 in file 'stack.cpp' in line 98 
+[01.10.2026 16:02:04] Program ended
+[01.10.2026 16:03:08] Function 'stackPop' was completed with Error 4 in file 'stack.cpp' in line 98 
+[01.10.2026 16:03:09] Program ended
+[01.10.2026 16:03:37] Program ended

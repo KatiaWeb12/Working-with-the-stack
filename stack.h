@@ -47,7 +47,7 @@ struct stack_t {
 
 // Prototypes
 
-ErrorCode stackOK(const struct stack_t* stk, const char* function, const int line);
+ErrorCode stackOK(const struct stack_t* stk, const char* function, const void* functionPtr, const int line);
 ErrorCode printIntoLogFile(const char* filename, struct debugLog_t* debugLogInfo);
 ErrorCode stackInit(
     struct stack_t* stk,
@@ -69,6 +69,7 @@ canary_t* getLeftDataCanary(const struct stack_t* stk);
 canary_t* getRightDataCanary(const struct stack_t* stk);
 void printStackElem(size_t index, stackElem_t value);
 ErrorCode cleanData(struct stack_t* stk);
+ErrorCode endLogIteration(const char* filename);
 
 ON_DBG(
     ErrorCode stackDump(const stack_t* stk);
@@ -77,11 +78,21 @@ ON_DBG(
 
 // Macro
 
-#define ASSERT_OK(stk, function)            \
-    if (stackOK((stk), (function), __LINE__) != 0) {      \
-            ON_DBG(stackDump((stk));)       \
-            abort();                        \
-    }                                       \
+#define ASSERT_OK(stk, function)                                                                \
+    if (stackOK((stk), (#function), reinterpret_cast<const void*>(function), __LINE__) != 0) {  \
+            ON_DBG(stackDump((stk));)                                                           \
+            endLogIteration("stack.log");                                                       \
+            abort();                                                                            \
+    }                                                                                           \
+
+
+#define LOG_STRUCT_FORMAT(stk, function, line)              \
+    char timeString[32] = {};                               \
+    debugLogInfo.time = getOperationTime(timeString, 32);   \
+    debugLogInfo.file = __FILE__;                           \
+    debugLogInfo.function = function;                       \
+    debugLogInfo.line = line;                               \
+
 
 #ifdef STACK_DEBUG
     #define STACK_DUMP(stk) stackDump((stk))
