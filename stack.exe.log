@@ -1064,3 +1064,188 @@ Run file:	C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe
 Directory:	C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack
 
 --------------------------------------------------
+
+--------------------------------------------------
+TXLib соболезнует...
+
+Программа: C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe,
+
+ВНЕЗАПНО: signal (22, 0x00): SIGABRT: Аварийное завершение программы, вызвана функция abort(). 
+
+С помощью функции signal() вы можете сами обработать эту ошибку.
+
+#1: TXLib [Ver: 00173a, Rev: 175, Date: 2025-12-31 23:02:50 +0400], Instance: 0x004F81DC (32-bit), Flags: Cmdre0, Thread: 0x1E08 (Main), GetLastError(): 183 (Невозможно создать файл, так как он уже существует). 
+
+--------------------------------------------------
+Стек вызовов:
+
+# 0 0x0040B361 in C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe: (anonymous namespace)::TX::_txOnSignal() at C:/Users/Kate/Desktop/downloads/TX/TXLib.h:11343
+# 1 0x757A8F03 in C:\WINDOWS\System32\msvcrt.dll: raise()
+# 2 0x757AD3CB in C:\WINDOWS\System32\msvcrt.dll: abort()
+
+# 3 0x0041EAE0 in C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe: stackPush() at C:/Users/Kate/Desktop/DED-C_Tasks/Task5 stack/stack.cpp:77:
+
+     75:     (stk->size)++;
+     76: 
+=>   77:     ASSERT_OK(stk, stackPush);
+     78: 
+     79:     ON_DBG(
+
+# 4 0x0041F981 in C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe: correctTest() at C:/Users/Kate/Desktop/DED-C_Tasks/Task5 stack/version1.cpp:31:
+
+     29:     }
+     30: 
+=>   31:     error = stackPush(&stk1, 7.2);
+     32:     if(error){
+     33:         printf("The function stackPush was completed with an error code: %d\n", error);
+
+# 5 0x0041F8CF in C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe: main() at C:/Users/Kate/Desktop/DED-C_Tasks/Task5 stack/version1.cpp:15:
+
+     13:     updateLogFile("stack.log");
+     14: 
+=>   15:     correctTest();
+     16: 
+     17:     endLogIteration("stack.log");
+
+--------------------------------------------------
+Developed with:
+
+The Dumb Artist Library (TX Library)
+TXLib [Ver: 00173a, Rev: 175, Date: 2025-12-31 23:02:50 +0400]
+Copyright (C) Ded (Ilya Dedinsky, http://txlib.ru) <mail@txlib.ru>
+See license on: http://txlib.ru
+
+TXLib file:	C:\Users\Kate\Desktop\downloads\TX\TXLib.h
+Compiled:	Oct  1 2026 16:40:00, GNU g++ 4.8.1, std=201103L, MinGW Runtime 3.20, 32-bit, Debug
+Started:	Oct 01 2026 16:40:06
+
+Run file:	C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe
+Directory:	C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack
+
+--------------------------------------------------
+
+--------------------------------------------------
+TXLib соболезнует...
+
+Программа: C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe,
+
+ВНЕЗАПНО: signal (22, 0x00): SIGABRT: Аварийное завершение программы, вызвана функция abort(). 
+
+С помощью функции signal() вы можете сами обработать эту ошибку.
+
+#1: TXLib [Ver: 00173a, Rev: 175, Date: 2025-12-31 23:02:50 +0400], Instance: 0x004F81DC (32-bit), Flags: Cmdre0, Thread: 0x32FC (Main), GetLastError(): 183 (Невозможно создать файл, так как он уже существует). 
+
+--------------------------------------------------
+Стек вызовов:
+
+# 0 0x0040B361 in C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe: (anonymous namespace)::TX::_txOnSignal() at C:/Users/Kate/Desktop/downloads/TX/TXLib.h:11343
+# 1 0x757A8F03 in C:\WINDOWS\System32\msvcrt.dll: raise()
+# 2 0x757AD3CB in C:\WINDOWS\System32\msvcrt.dll: abort()
+
+# 3 0x0041EC7C in C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe: resizeStack() at C:/Users/Kate/Desktop/DED-C_Tasks/Task5 stack/stack.cpp:120:
+
+    118: ErrorCode resizeStack(stack_t* stk, int direction){
+    119: 
+=>  120:     ASSERT_OK(stk, resizeStack);
+    121: 
+    122:     size_t oldCapacity = stk->capacity;
+
+# 4 0x0041EBB3 in C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe: stackPop() at C:/Users/Kate/Desktop/DED-C_Tasks/Task5 stack/stack.cpp:102:
+
+    100: 
+    101:     if((stk->size)+1 <= (stk->capacity / 2)){
+=>  102:         resizeStack(stk, RESIZE_DOWN_INDICATOR);
+    103:     }
+    104: 
+
+# 5 0x0041FA9E in C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe: correctTest() at C:/Users/Kate/Desktop/DED-C_Tasks/Task5 stack/version1.cpp:63:
+
+     61:     }
+     62: 
+=>   63:     error = stackPop(&stk1, &lastValue);
+     64:     if(error){
+     65:         printf("The function stackPop was completed with an error code: %d\n", error);
+
+# 6 0x0041F8CF in C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe: main() at C:/Users/Kate/Desktop/DED-C_Tasks/Task5 stack/version1.cpp:15:
+
+     13:     updateLogFile("stack.log");
+     14: 
+=>   15:     correctTest();
+     16: 
+     17:     endLogIteration("stack.log");
+
+--------------------------------------------------
+Developed with:
+
+The Dumb Artist Library (TX Library)
+TXLib [Ver: 00173a, Rev: 175, Date: 2025-12-31 23:02:50 +0400]
+Copyright (C) Ded (Ilya Dedinsky, http://txlib.ru) <mail@txlib.ru>
+See license on: http://txlib.ru
+
+TXLib file:	C:\Users\Kate\Desktop\downloads\TX\TXLib.h
+Compiled:	Oct  1 2026 16:42:51, GNU g++ 4.8.1, std=201103L, MinGW Runtime 3.20, 32-bit, Debug
+Started:	Oct 01 2026 16:42:55
+
+Run file:	C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe
+Directory:	C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack
+
+--------------------------------------------------
+
+--------------------------------------------------
+TXLib соболезнует...
+
+Программа: C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe,
+
+ВНЕЗАПНО: signal (22, 0x00): SIGABRT: Аварийное завершение программы, вызвана функция abort(). 
+
+С помощью функции signal() вы можете сами обработать эту ошибку.
+
+#1: TXLib [Ver: 00173a, Rev: 175, Date: 2025-12-31 23:02:50 +0400], Instance: 0x004F81DC (32-bit), Flags: Cmdre0, Thread: 0x79E0 (Main), GetLastError(): 183 (Невозможно создать файл, так как он уже существует). 
+
+--------------------------------------------------
+Стек вызовов:
+
+# 0 0x0040B361 in C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe: (anonymous namespace)::TX::_txOnSignal() at C:/Users/Kate/Desktop/downloads/TX/TXLib.h:11343
+# 1 0x757A8F03 in C:\WINDOWS\System32\msvcrt.dll: raise()
+# 2 0x757AD3CB in C:\WINDOWS\System32\msvcrt.dll: abort()
+
+# 3 0x0041EC1B in C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe: stackPop() at C:/Users/Kate/Desktop/DED-C_Tasks/Task5 stack/stack.cpp:112:
+
+    110: 
+    111: 
+=>  112:     ASSERT_OK(stk, stackPop);
+    113: 
+    114:     STACK_DUMP(stk);
+
+# 4 0x0041FF45 in C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe: badTryToPopEmptyStackTest() at C:/Users/Kate/Desktop/DED-C_Tasks/Task5 stack/version1.cpp:191:
+
+    189:     stackElem_t lastValue = NAN;
+    190: 
+=>  191:     error = stackPop(&stk1, &lastValue);
+    192:     if(error){
+    193:         printf("The function stackPop was completed with an error code: %d\n", error);
+
+# 5 0x0041F8CF in C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe: main() at C:/Users/Kate/Desktop/DED-C_Tasks/Task5 stack/version1.cpp:15:
+
+     13:     updateLogFile("stack.log");
+     14: 
+=>   15:     badTryToPopEmptyStackTest();
+     16: 
+     17:     endLogIteration("stack.log");
+
+--------------------------------------------------
+Developed with:
+
+The Dumb Artist Library (TX Library)
+TXLib [Ver: 00173a, Rev: 175, Date: 2025-12-31 23:02:50 +0400]
+Copyright (C) Ded (Ilya Dedinsky, http://txlib.ru) <mail@txlib.ru>
+See license on: http://txlib.ru
+
+TXLib file:	C:\Users\Kate\Desktop\downloads\TX\TXLib.h
+Compiled:	Oct  1 2026 16:45:00, GNU g++ 4.8.1, std=201103L, MinGW Runtime 3.20, 32-bit, Debug
+Started:	Oct 01 2026 16:45:04
+
+Run file:	C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack\stack.exe
+Directory:	C:\Users\Kate\Desktop\DED-C_Tasks\Task5 stack
+
+--------------------------------------------------

@@ -48,6 +48,10 @@ ErrorCode stackInit(stack_t* stk, size_t capacity ON_DBG(, debugStack_t debugInf
 
     ON_DBG(
         stk->debugInfo = debugInfo;
+        stk->dataHash = 0;
+        stk->structHash = 0;
+
+        updateStackHash(stk);
     )
 
     ASSERT_OK(stk, stackInit);
@@ -56,7 +60,6 @@ ErrorCode stackInit(stack_t* stk, size_t capacity ON_DBG(, debugStack_t debugInf
 
     return ERR_OK;
 }
-
 
 ErrorCode stackPush(stack_t* stk, stackElem_t value)
 {
@@ -70,7 +73,12 @@ ErrorCode stackPush(stack_t* stk, stackElem_t value)
     stk->data[stk->size] = value;
     (stk->size)++;
 
+    ON_DBG(
+        updateStackHash(stk);
+    )
+
     ASSERT_OK(stk, stackPush);
+
 
     STACK_DUMP(stk);
 
@@ -89,11 +97,16 @@ ErrorCode stackPop(stack_t* stk, stackElem_t* value)
 
     stk->data[stk->size] = STACK_POISON;
 
+    ON_DBG(
+        updateStackHash(stk);
+    )
+
     if((stk->size)+1 <= (stk->capacity / 2)){
         resizeStack(stk, RESIZE_DOWN_INDICATOR);
     }
 
     printf("Last value" PRINT_ELEM_FORMAT "was deleted from stack\n\n", *value);
+
 
     ASSERT_OK(stk, stackPop);
 
@@ -144,9 +157,14 @@ ErrorCode resizeStack(stack_t* stk, int direction){
     *getLeftDataCanary(stk)  = LEFT_DATA_CANARY;
     *getRightDataCanary(stk) = RIGHT_DATA_CANARY;
 
+    ON_DBG(
+        updateStackHash(stk);
+    )
+
     ASSERT_OK(stk, resizeStack);
 
     printf(COLOR_RED "%s" COLOR_RESET, "\nStack resize\n");
+
 
     return ERR_OK;
 }
@@ -158,6 +176,10 @@ ErrorCode cleanData(struct stack_t* stk){
     for(size_t i = 0; i < stk->capacity; i++){
         (stk->data)[i] = STACK_POISON;
     }
+
+    ON_DBG(
+        updateStackHash(stk);
+    )
 
     ASSERT_OK(stk, cleanData);
 
@@ -199,6 +221,27 @@ ErrorCode stackOK(const stack_t* stk, const char* function, const void* function
 
         return ERR_INVALID_ARGUMENT;
     }
+
+    #ifdef STACK_DEBUG
+
+    if (stk->dataHash != calculateDataHash(stk)) {
+
+        debugLogInfo.error = ERR_INVALID_DATA;
+        printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
+
+        return ERR_INVALID_DATA;
+    }
+
+    if (stk->structHash != calculateStructHash((stack_t*)stk)) {
+
+        debugLogInfo.error = ERR_INVALID_DATA;
+        printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
+
+        return ERR_INVALID_DATA;
+    }
+
+
+    #endif
 
     if(functionPtr == stackPop && stk->size == 0){
 
@@ -415,6 +458,40 @@ ErrorCode stackDump(const stack_t* stk)
     return ERR_OK;
 }
 
+hash_t hashing(const void* data, size_t size)
+{
+    const unsigned char* bytes = (const unsigned char*)data;
+
+    hash_t hash = 5381;
+
+    for (size_t i = 0; i < size; i++) {
+        hash = ((hash << 5) + hash) + bytes[i];
+    }
+
+    return hash;
+}
+
+hash_t calculateDataHash(const stack_t* stk)
+{
+    return hashing(stk->data, stk->capacity * sizeof(stackElem_t));
+}
+
+hash_t calculateStructHash(stack_t* stk)
+{
+
+    hash_t oldStructHash = stk->structHash;
+    stk->structHash = 0;
+    hash_t newStructHash = hashing(stk, sizeof(stack_t));
+    stk->structHash = oldStructHash;
+
+    return newStructHash;
+}
+
+void updateStackHash(stack_t* stk)
+{
+    stk->dataHash = calculateDataHash(stk);
+    stk->structHash = calculateStructHash(stk);
+}
 
 #endif
 

@@ -96,21 +96,20 @@ stack_t &stk1[0061FEA0] created by main() at version1cpp:22
 }
 ```
 
-### Tests
+## Tests
 Several test variations have been implemented.
 ```bash
 ErrorCode correctTest();
 ErrorCode sizeMoreThanCapacityTest();
 ErrorCode badDataCanaryTest();
 ```
-### Canary Protection
+## Canary Protection
 
 The stack structure is protected by canaries. The array of values itself also contains canaries.
 
 ```bash
 typedef unsigned long long canary_t;
 ```
-
 There are functions for alignment:
 ```bash
 size_t getDataOffset();
@@ -120,3 +119,22 @@ size_t getRightCanaryOffset(size_t capacity);
 canary_t* getLeftDataCanary(const struct stack_t* stk);
 canary_t* getRightDataCanary(const struct stack_t* stk);
 ```
+## Hash Protection
+
+Hashing is used to detect changes in stack data.
+In debug mode, the `stack_t' structure contains two hashes:
+
+- `dataHash' — hash of the dynamic array `data`;
+- `structHash` is the hash of the entire 'stack_t` structure.
+
+Before calculating the hash of the structure, the `structHash` field is temporarily
+reset so that the old hash value does not affect the calculation of the new one.
+
+Before performing the `stackOK()' operations` recalculates the hashes and compares them with the stored values.
+
+## Changed features - Dedinsky Advises
+
+- write to the end of the log that the program is completed +
+- In stackOk(), write information to the structure using a macro +
+- Compare function pointers or strcmp ([worse]) +
+

@@ -15,6 +15,7 @@
 
 typedef double stackElem_t;
 typedef unsigned long long canary_t;
+typedef unsigned long long hash_t;
 
 struct debugLog_t {
     char* time;
@@ -40,6 +41,9 @@ struct stack_t {
 
     ON_DBG(
         debugStack_t debugInfo;
+
+        hash_t dataHash;
+        hash_t structHash;
     )
 
     canary_t rightStructCanary;
@@ -73,8 +77,11 @@ ErrorCode endLogIteration(const char* filename);
 
 ON_DBG(
     ErrorCode stackDump(const stack_t* stk);
+    hash_t hashing(const void* data, size_t size);
+    hash_t calculateDataHash(const struct stack_t* stk);
+    hash_t calculateStructHash(stack_t* stk);
+    void updateStackHash(struct stack_t* stk);
 )
-
 
 // Macro
 
