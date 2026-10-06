@@ -125,7 +125,7 @@ Hashing is used to detect changes in stack data.
 In debug mode, the `stack_t' structure contains two hashes:
 
 - `dataHash` — hash of the dynamic array `data`;
-- `structHash` is the hash of the entire 'stack_t` structure.
+- `structHash` is the hash of the entire `stack_t` structure.
 
 Before calculating the hash of the structure, the `structHash` field is temporarily
 reset so that the old hash value does not affect the calculation of the new one.
