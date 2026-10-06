@@ -12,7 +12,7 @@ int main(){
 
     updateLogFile("stack.log");
 
-    badTryToPopEmptyStackTest();
+    correctTest();
 
     endLogIteration("stack.log");
 

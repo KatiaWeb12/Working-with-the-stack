@@ -4,7 +4,29 @@
 #include <stddef.h>
 #include "../universal-features/error.h"
 
-#ifdef STACK_DEBUG
+#define CANARY_DEBUG 1
+#define HASH_DEBUG 2
+#define DUMP_DEBUG 4
+
+// #define STACK_DEBUG (CANARY_DEBUG | DUMP_DEBUG | HASH_DEBUG)
+
+#ifndef STACK_DEBUG
+    #define STACK_DEBUG 0
+#endif
+
+#if (STACK_DEBUG & CANARY_DEBUG)
+    #define ON_CANARY(...) __VA_ARGS__
+#else
+    #define ON_CANARY(...)
+#endif
+
+#if (STACK_DEBUG & HASH_DEBUG)
+    #define ON_HASH(...) __VA_ARGS__
+#else
+    #define ON_HASH(...)
+#endif
+
+#if (STACK_DEBUG & DUMP_DEBUG)
     #define ON_DBG(...) __VA_ARGS__
 #else
     #define ON_DBG(...)
@@ -17,41 +39,49 @@ typedef double stackElem_t;
 typedef unsigned long long canary_t;
 typedef unsigned long long hash_t;
 
-struct debugLog_t {
+typedef struct debugLog_t {
     char* time;
     const char* file;
     const char* function;
     int line;
     ErrorCode error;
-};
+} debugLog_t;
 
-struct debugStack_t {
+typedef struct debugStack_t {
     const char* name;
     const char* file;
     const char* function;
     size_t line;
-};
+} debugStack_t;
 
-struct stack_t {
-    canary_t leftStructCanary;
+
+typedef struct stack_t {
+
+    ON_CANARY(
+        canary_t leftStructCanary;
+    )
 
     stackElem_t* data;
     size_t size;
     size_t capacity;
 
-    ON_DBG(
-        debugStack_t debugInfo;
-
+    ON_HASH(
         hash_t dataHash;
         hash_t structHash;
     )
 
-    canary_t rightStructCanary;
-};
+    ON_DBG(
+        debugStack_t debugInfo;
+    )
+
+    ON_CANARY(
+        canary_t rightStructCanary;
+    )
+} stack_t;
 
 // Prototypes
 
-ErrorCode stackOK(const struct stack_t* stk, const char* function, const void* functionPtr, const int line);
+ErrorCode stackOK(struct stack_t* stk, const char* function, const void* functionPtr, const int line);
 ErrorCode printIntoLogFile(const char* filename, struct debugLog_t* debugLogInfo);
 ErrorCode stackInit(
     struct stack_t* stk,
@@ -77,6 +107,8 @@ ErrorCode endLogIteration(const char* filename);
 
 ON_DBG(
     ErrorCode stackDump(const stack_t* stk);
+)
+ON_HASH(
     hash_t hashing(const void* data, size_t size);
     hash_t calculateDataHash(const struct stack_t* stk);
     hash_t calculateStructHash(stack_t* stk);
@@ -93,21 +125,21 @@ ON_DBG(
     }                                                                                           \
 
 
-#define LOG_STRUCT_FORMAT(stk, function, line)              \
-    char timeString[32] = {};                               \
-    debugLogInfo.time = getOperationTime(timeString, 32);   \
-    debugLogInfo.file = __FILE__;                           \
-    debugLogInfo.function = function;                       \
-    debugLogInfo.line = line;                               \
+#define LOG_STRUCT_FORMAT(debugLogInfoPtr, stk, function, line)                 \
+    char timeString[32] = {};                                                   \
+    debugLogInfoPtr->time = getOperationTime(timeString, 32);                   \
+    debugLogInfoPtr->file = __FILE__;                                           \
+    debugLogInfoPtr->function = function;                                       \
+    debugLogInfoPtr->line = line;                                               \
 
 
-#ifdef STACK_DEBUG
+#if STACK_DEBUG >= 3
     #define STACK_DUMP(stk) stackDump((stk))
 #else
     #define STACK_DUMP(stk) (void)
 #endif
 
-#ifdef STACK_DEBUG
+#if STACK_DEBUG >= 3
 #define STACK_INIT(stk, capacity)                 \
     stackInit(                                  \
         (stk),                                   \

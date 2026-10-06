@@ -33,21 +33,27 @@ ErrorCode stackInit(stack_t* stk, size_t capacity ON_DBG(, debugStack_t debugInf
 
     stk->data = (stackElem_t*)(newMemory + getDataOffset());
 
-    stk->leftStructCanary  = LEFT_STRUCT_CANARY;
-    stk->rightStructCanary = RIGHT_STRUCT_CANARY;
-
     stk->size = 0;
     stk->capacity = capacity;
 
-    *getLeftDataCanary(stk)  = LEFT_DATA_CANARY;
-    *getRightDataCanary(stk) = RIGHT_DATA_CANARY;
+    ON_CANARY(
+
+        stk->leftStructCanary  = LEFT_STRUCT_CANARY;
+        stk->rightStructCanary = RIGHT_STRUCT_CANARY;
+        *getLeftDataCanary(stk)  = LEFT_DATA_CANARY;
+        *getRightDataCanary(stk) = RIGHT_DATA_CANARY;
+    )
 
     for (size_t i = 0; i < capacity; i++) {
         stk->data[i] = STACK_POISON;
     }
 
+
     ON_DBG(
         stk->debugInfo = debugInfo;
+    )
+
+    ON_HASH(
         stk->dataHash = 0;
         stk->structHash = 0;
 
@@ -73,7 +79,7 @@ ErrorCode stackPush(stack_t* stk, stackElem_t value)
     stk->data[stk->size] = value;
     (stk->size)++;
 
-    ON_DBG(
+    ON_HASH(
         updateStackHash(stk);
     )
 
@@ -97,7 +103,7 @@ ErrorCode stackPop(stack_t* stk, stackElem_t* value)
 
     stk->data[stk->size] = STACK_POISON;
 
-    ON_DBG(
+    ON_HASH(
         updateStackHash(stk);
     )
 
@@ -153,11 +159,12 @@ ErrorCode resizeStack(stack_t* stk, int direction){
         }
 
     }
+    ON_CANARY(
+        *getLeftDataCanary(stk)  = LEFT_DATA_CANARY;
+        *getRightDataCanary(stk) = RIGHT_DATA_CANARY;
+    )
 
-    *getLeftDataCanary(stk)  = LEFT_DATA_CANARY;
-    *getRightDataCanary(stk) = RIGHT_DATA_CANARY;
-
-    ON_DBG(
+    ON_HASH(
         updateStackHash(stk);
     )
 
@@ -177,7 +184,7 @@ ErrorCode cleanData(struct stack_t* stk){
         (stk->data)[i] = STACK_POISON;
     }
 
-    ON_DBG(
+    ON_HASH(
         updateStackHash(stk);
     )
 
@@ -208,11 +215,11 @@ ErrorCode stackDestroy(stack_t* stk)
 
 };
 
-ErrorCode stackOK(const stack_t* stk, const char* function, const void* functionPtr, const int line){
+ErrorCode stackOK(stack_t* stk, const char* function, const void* functionPtr, const int line){
 
     debugLog_t debugLogInfo = {};
 
-    LOG_STRUCT_FORMAT(stk, function, line);
+    LOG_STRUCT_FORMAT((&debugLogInfo), stk, function, line);
 
     if (stk == NULL) {
 
@@ -222,26 +229,23 @@ ErrorCode stackOK(const stack_t* stk, const char* function, const void* function
         return ERR_INVALID_ARGUMENT;
     }
 
-    #ifdef STACK_DEBUG
+    ON_HASH(
+        if (stk->dataHash != calculateDataHash(stk)) {
 
-    if (stk->dataHash != calculateDataHash(stk)) {
+            debugLogInfo.error = ERR_INVALID_DATA;
+            printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
 
-        debugLogInfo.error = ERR_INVALID_DATA;
-        printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
+            return ERR_INVALID_DATA;
+        }
 
-        return ERR_INVALID_DATA;
-    }
+        if (stk->structHash != calculateStructHash((stack_t*)stk)) {
 
-    if (stk->structHash != calculateStructHash((stack_t*)stk)) {
+            debugLogInfo.error = ERR_INVALID_DATA;
+            printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
 
-        debugLogInfo.error = ERR_INVALID_DATA;
-        printIntoLogFile(LOG_FILE_NAME, &debugLogInfo);
-
-        return ERR_INVALID_DATA;
-    }
-
-
-    #endif
+            return ERR_INVALID_DATA;
+        }
+    )
 
     if(functionPtr == stackPop && stk->size == 0){
 
@@ -250,6 +254,7 @@ ErrorCode stackOK(const stack_t* stk, const char* function, const void* function
 
         return ERR_OUT_OF_BOUNDS;
     }
+    ON_CANARY(
 
     if ((stk->leftStructCanary != LEFT_STRUCT_CANARY) || (stk->rightStructCanary != RIGHT_STRUCT_CANARY)) {
 
@@ -266,6 +271,7 @@ ErrorCode stackOK(const stack_t* stk, const char* function, const void* function
 
         return ERR_INVALID_DATA;
     }
+    )
 
     if(_msize((char*)stk->data - getDataOffset()) != getAllocationSize(stk->capacity)){
 
@@ -369,7 +375,11 @@ ErrorCode endLogIteration(const char* filename){
 
 size_t getDataOffset()
 {
-    return alignment(sizeof(canary_t), alignof(stackElem_t));
+    #if STACK_DEBUG >= 1
+        return alignment(sizeof(canary_t), alignof(stackElem_t));
+    #else
+        return 0;
+    #endif
 }
 
 size_t alignment(size_t value, size_t alignment)
@@ -402,7 +412,11 @@ canary_t* getRightDataCanary(const stack_t* stk)
 
 size_t getAllocationSize(size_t capacity)
 {
-    return getRightCanaryOffset(capacity) + sizeof(canary_t);
+    #if STACK_DEBUG >= 1
+        return getRightCanaryOffset(capacity) + sizeof(canary_t);
+    #else
+        return capacity * sizeof(stackElem_t);
+    #endif
 }
 
 void printStackElem(size_t index, stackElem_t value){
@@ -417,7 +431,7 @@ void printStackElem(size_t index, stackElem_t value){
     return;
 }
 
-#ifdef STACK_DEBUG
+#if STACK_DEBUG >= 3
 
 ErrorCode stackDump(const stack_t* stk)
 {
@@ -457,7 +471,9 @@ ErrorCode stackDump(const stack_t* stk)
 
     return ERR_OK;
 }
+#endif
 
+#if STACK_DEBUG >= 2
 hash_t hashing(const void* data, size_t size)
 {
     const unsigned char* bytes = (const unsigned char*)data;

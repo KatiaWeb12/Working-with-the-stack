@@ -10,7 +10,7 @@ The project involves working with stacks that have multiple layers of protection
 It’s better to launch it from the console.
 ```bash
 gcc stack.h -o stack.h.exe
-g++ -Wall -Wextra -DSTACK_DEBUG version1.cpp stack.cpp -o stack.exe
+g++ -Wall -Wextra -DSTACK_DEBUG=3 version1.cpp stack.cpp -o stack.exe
 
 ./stack.exe
 ```
@@ -39,6 +39,44 @@ The file contains implementation of functions
 
 ### version1.cpp
 The file contains a call to the main functions for working with the stack.
+
+## DEBUG CODES
+- STACK_DEBUG = 0 — without protection
+- STACK_DEBUG = 1 — canaries
+- STACK_DEBUG = 2 — hashes
+- STACK_DEBUG = 3 — dump/debugInfo
+
+```
+#define CANARY_DEBUG 1
+#define HASH_DEBUG 2
+#define DUMP_DEBUG 4
+```
+
+```
+#define STACK_DEBUG (CANARY_DEBUG | DUMP_DEBUG | HASH_DEBUG)
+
+#ifndef STACK_DEBUG
+    #define STACK_DEBUG 0
+#endif
+
+#if (STACK_DEBUG & CANARY_DEBUG)
+    #define ON_CANARY(...) __VA_ARGS__
+#else
+    #define ON_CANARY(...)
+#endif
+
+#if (STACK_DEBUG & HASH_DEBUG)
+    #define ON_HASH(...) __VA_ARGS__
+#else
+    #define ON_HASH(...)
+#endif
+
+#if (STACK_DEBUG & DUMP_DEBUG)
+    #define ON_DBG(...) __VA_ARGS__
+#else
+    #define ON_DBG(...)
+#endif
+```
 
 ## Functions
 

@@ -62,3 +62,17 @@
 [01.10.2026 16:44:36] Program ended
 [01.10.2026 16:45:04] Function 'stackPop' was completed with Error 4 in file 'stack.cpp' in line 112 
 [01.10.2026 16:45:04] Program ended
+[06.10.2026 13:52:20] Function 'stackPop' was completed with Error 4 in file 'stack.cpp' in line 111 
+[06.10.2026 13:52:21] Program ended
+[06.10.2026 14:15:00] Function 'stackInit' was completed with Error 8 in file 'stack.cpp' in line 62 
+[06.10.2026 14:15:01] Program ended
+[06.10.2026 14:18:49] Function 'stackInit' was completed with Error 8 in file 'stack.cpp' in line 62 
+[06.10.2026 14:18:50] Program ended
+[06.10.2026 14:20:49] Function 'stackInit' was completed with Error 8 in file 'stack.cpp' in line 62 
+[06.10.2026 14:20:50] Program ended
+[06.10.2026 14:24:15] Program ended
+[06.10.2026 14:24:55] Program ended
+[06.10.2026 14:25:42] Program ended
+[06.10.2026 14:59:22] Program ended
+[06.10.2026 15:06:42] Program ended
+[06.10.2026 15:08:26] Program ended
